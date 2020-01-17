@@ -1,29 +1,27 @@
 const fetch = require('node-fetch')
 const querystring = require('querystring')
 
-function request(url, headers = {}, ...req) {
+function request(url, headers, opts = {}, ...req) {
 	return new Promise((resolve, reject) => {
 		const [ method, route, { query, body }, end ] = req
 		end()
 	
-		fetch(`${url}${route}${ query ? `?${querystring.stringify(query)}` : ""}`, {
+		fetch(`${url}${route}${ query || opts.query ? `?${querystring.stringify({
+			...query, ...opts.query || {}
+		})}` : ""}`, {
 			method,
 			headers: {
-				'Content-Type': 'application/json',
+				'Content-Type': opts.contentType ? opts.contentType : 'application/json',
 				...headers
 			},
 			body: body ? JSON.stringify(body) : null
 		})
 		.then(res => {
-			// if (!res.ok) throw new Error(res.json())
-			return res.json()
+			return res[opts.format || "json"]()
 		})
-		.then(json => {
-			resolve(json)
+		.then(parsed => {
+			resolve(parsed)
 		})
-		//.catch(async err => {
-			//resolve
-	//	})
 	})
 }
 
